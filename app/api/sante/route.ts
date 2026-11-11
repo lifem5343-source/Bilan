@@ -1,43 +1,44 @@
+import type Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
+import { obtenirIdPrix } from "@/lib/prix";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Page de diagnostic TEMPORAIRE. À supprimer avant la mise en production.
 // Elle n'affiche jamais de clé : seulement si chaque réglage existe, l'identifiant
-// (public) du compte Stripe auquel appartient la clé secrète, et les objets qu'il contient.
+// (public) du compte Stripe auquel appartient la clé secrète, et la réponse de Stripe.
 function masquer(texte: string): string {
   return texte
     .replace(/(sk|pk|rk|whsec)_[A-Za-z0-9_*]+/g, "$1_***")
-    .slice(0, 300);
+    .slice(0, 400);
 }
 
-async function essayer<T>(action: () => Promise<T>): Promise<T | { erreur: string }> {
+async function essayer<T>(
+  action: () => Promise<T>,
+): Promise<T | { erreur: string }> {
   try {
     return await action();
   } catch (erreur) {
-    const e = erreur as { code?: string; message?: string };
-    return { erreur: masquer(`${e.code ?? ""} ${e.message ?? ""}`.trim()) };
+    const e = erreur as {
+      type?: string;
+      code?: string;
+      param?: string;
+      statusCode?: number;
+      message?: string;
+    };
+    return {
+      erreur: masquer(
+        [e.type, e.code, e.param, e.statusCode, e.message]
+          .filter(Boolean)
+          .join(" | "),
+      ),
+    };
   }
 }
 
-export async function GET() {
-  const reglages = {
-    STRIPE_SECRET_KEY: Boolean(process.env.STRIPE_SECRET_KEY),
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: Boolean(
-      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
-    ),
-    STRIPE_WEBHOOK_SECRET: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
-    STRIPE_PRICE_ID: Boolean(process.env.STRIPE_PRICE_ID),
-    NEXT_PUBLIC_SUPABASE_URL: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: Boolean(
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    ),
-    SUPABASE_SERVICE_ROLE_KEY: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
-    NEXT_PUBLIC_CONTACT_EMAIL: Boolean(process.env.NEXT_PUBLIC_CONTACT_EMAIL),
-  };
-
+export async function GET(request: Request) {
   const idPrixConfigure = process.env.STRIPE_PRICE_ID ?? "";
 
   const stripe = await essayer(async () => {
@@ -58,23 +59,31 @@ export async function GET() {
       }));
     });
 
-    const webhooks = await essayer(async () => {
-      const liste = await client.webhookEndpoints.list({ limit: 10 });
-      return liste.data.map((w) => ({
-        id: w.id,
-        url: w.url,
-        statut: w.status,
-        evenements: w.enabled_events.length,
-      }));
+    // Reproduit exactement ce que fait le bouton « Payer ».
+    const paiement = await essayer(async () => {
+      const idPrix = await obtenirIdPrix();
+      const origine = new URL(request.url).origin;
+      const params = {
+        mode: "subscription",
+        ui_mode: "embedded_page",
+        line_items: [{ price: idPrix, quantity: 1 }],
+        locale: "fr",
+        return_url: `${origine}/merci?session_id={CHECKOUT_SESSION_ID}`,
+      } as unknown as Stripe.Checkout.SessionCreateParams;
+      const session = await client.checkout.sessions.create(params);
+      return {
+        prix: idPrix,
+        uiMode: session.ui_mode,
+        statut: session.status,
+        aUnClientSecret: Boolean(session.client_secret),
+      };
     });
 
-    return { compte, prix, webhooks };
+    return { compte, prix, paiement };
   });
 
   return NextResponse.json({
-    reglages,
     idPrixConfigure,
-    longueurIdPrix: idPrixConfigure.length,
     stripe,
   });
 }
