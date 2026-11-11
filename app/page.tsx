@@ -77,7 +77,7 @@ export default function Accueil() {
                 key={d.chiffre}
                 className="flex items-baseline gap-5 py-5"
               >
-                <span className="chiffre w-28 shrink-0 text-3xl">
+                <span className="chiffre w-32 shrink-0 whitespace-nowrap text-3xl">
                   {d.chiffre}
                 </span>
                 <span className="text-lg leading-snug">{d.texte}</span>
@@ -113,7 +113,7 @@ export default function Accueil() {
           </h2>
           <p className="mt-6 flex items-baseline gap-3">
             <span className="font-mono text-6xl font-semibold tracking-tight">
-              39&nbsp;€
+              39&#8239;€
             </span>
             <span className="text-lg text-papier/80">par mois</span>
           </p>
