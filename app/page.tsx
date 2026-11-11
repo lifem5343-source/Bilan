@@ -1,3 +1,10 @@
+import PaiementIntegre from "@/components/PaiementIntegre";
+import {
+  DELAI_REMBOURSEMENT_JOURS_OUVRES,
+  EMAIL_CONTACT,
+  GARANTIE_JOURS,
+} from "@/lib/offre";
+
 const douleurs = [
   {
     chiffre: "45 min",
@@ -121,10 +128,28 @@ export default function Accueil() {
             Dix clients suivis. Soit environ 1,30&nbsp;€ par jour, ou 3,90&nbsp;€
             par client et par mois.
           </p>
-          <p className="mt-8 rounded-md border border-papier/25 p-4 text-base text-papier/80">
-            Le paiement s&apos;ouvre à la prochaine mise à jour. Reviens dans
-            quelques jours.
+          <p className="mt-6 text-lg">
+            Tu récupères environ 7&nbsp;h&nbsp;30 par mois. Ça met l&apos;heure
+            à <span className="font-mono font-semibold text-[#FF8A4C]">5,20&nbsp;€</span>.
           </p>
+
+          <div className="mt-8 rounded-md border border-papier/30 p-4">
+            <p className="font-semibold">
+              Satisfait ou remboursé, {GARANTIE_JOURS} jours.
+            </p>
+            <p className="mt-2 text-base text-papier/80">
+              Écris à {EMAIL_CONTACT} dans les {GARANTIE_JOURS} jours qui suivent
+              ton paiement, sans avoir à te justifier. Tu es remboursé en{" "}
+              {DELAI_REMBOURSEMENT_JOURS_OUVRES} jours ouvrés au plus.
+            </p>
+          </div>
+
+          <p className="mt-8 text-base font-semibold">
+            Sans engagement, résiliable à tout moment.
+          </p>
+          <div className="mt-3">
+            <PaiementIntegre />
+          </div>
         </div>
       </section>
 
