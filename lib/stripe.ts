@@ -9,7 +9,11 @@ export function getStripe(): Stripe {
     if (!cle) {
       throw new Error("STRIPE_SECRET_KEY est manquante");
     }
-    client = new Stripe(cle);
+    // Version de l'API fixée ici : le paiement intégré (ui_mode "embedded_page")
+    // exige au moins 2026-03-25.dahlia, quelle que soit la version par défaut du compte.
+    client = new Stripe(cle, {
+      apiVersion: "2026-03-25.dahlia" as unknown as Stripe.LatestApiVersion,
+    });
   }
   return client;
 }
