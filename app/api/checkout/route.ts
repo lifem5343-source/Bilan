@@ -17,6 +17,8 @@ export async function POST(request: Request) {
       ui_mode: "embedded_page",
       line_items: [{ price: prix, quantity: 1 }],
       locale: "fr",
+      // Managed Payments (Stripe vendeur officiel, +3,5 %) est désactivé : on garde la main sur la TVA.
+      managed_payments: { enabled: false },
       return_url: `${origine}/merci?session_id={CHECKOUT_SESSION_ID}`,
     } as unknown as Stripe.Checkout.SessionCreateParams;
 

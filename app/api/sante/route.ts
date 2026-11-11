@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 function masquer(texte: string): string {
   return texte
     .replace(/(sk|pk|rk|whsec)_[A-Za-z0-9_*]+/g, "$1_***")
-    .slice(0, 400);
+    .slice(0, 900);
 }
 
 async function essayer<T>(
@@ -68,6 +68,7 @@ export async function GET(request: Request) {
         ui_mode: "embedded_page",
         line_items: [{ price: idPrix, quantity: 1 }],
         locale: "fr",
+        managed_payments: { enabled: false },
         return_url: `${origine}/merci?session_id={CHECKOUT_SESSION_ID}`,
       } as unknown as Stripe.Checkout.SessionCreateParams;
       const session = await client.checkout.sessions.create(params);
