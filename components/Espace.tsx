@@ -1,20 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
-let instance: SupabaseClient | null = null;
-
-// Créé à la demande : la clé publique n'est lue qu'au moment d'en avoir besoin.
-function clientNavigateur(): SupabaseClient {
-  if (!instance) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const cle = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !cle) throw new Error("Variables Supabase publiques manquantes");
-    instance = createClient(url, cle);
-  }
-  return instance;
-}
+import { clientNavigateur } from "@/lib/supabase-navigateur";
 
 type Phase = "chargement" | "connexion" | "abonne" | "sans-abonnement" | "erreur";
 
@@ -34,15 +21,25 @@ export default function Espace() {
           setPhase("connexion");
           return;
         }
-        const { data: lignes, error } = await supabase
-          .from("subscriptions")
-          .select("status")
-          .eq("user_id", data.session.user.id)
-          .in("status", ["active", "trialing"])
-          .limit(1);
-        if (error) throw error;
+        // Juste après un paiement, le webhook peut avoir quelques secondes de retard :
+        // on réessaie un peu avant de conclure qu'il n'y a pas d'abonnement.
+        let abonne = false;
+        for (let essai = 0; essai < 6 && actif; essai++) {
+          const { data: lignes, error } = await supabase
+            .from("subscriptions")
+            .select("status")
+            .eq("user_id", data.session.user.id)
+            .in("status", ["active", "trialing"])
+            .limit(1);
+          if (error) throw error;
+          if (lignes && lignes.length > 0) {
+            abonne = true;
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 2000));
+        }
         if (!actif) return;
-        setPhase(lignes && lignes.length > 0 ? "abonne" : "sans-abonnement");
+        setPhase(abonne ? "abonne" : "sans-abonnement");
       } catch (erreur) {
         console.error(erreur);
         if (actif) setPhase("erreur");

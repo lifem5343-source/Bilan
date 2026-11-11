@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getStripe } from "@/lib/stripe";
+import ConnexionAuto from "@/components/ConnexionAuto";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +10,8 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-// Cette page n'ouvre aucun accès : elle ne fait qu'informer.
-// L'accès est donné uniquement par le webhook Stripe, côté serveur.
+// Cette page n'ouvre aucun accès aux fonctions payantes : elle ne fait qu'ouvrir la session.
+// Le droit d'accès est donné uniquement par le webhook Stripe (ligne « subscriptions »).
 export default async function Merci({
   searchParams,
 }: {
@@ -36,15 +37,7 @@ export default async function Merci({
           <h1 className="mt-3 font-display text-4xl font-bold tracking-tight">
             Merci, ton abonnement est en cours d&apos;activation.
           </h1>
-          <p className="mt-4 text-lg text-sourdine">
-            Ouvre ton espace avec l&apos;e-mail utilisé pour payer. On t&apos;y
-            envoie un lien de connexion, sans mot de passe.
-          </p>
-          <div className="mt-8 max-w-xs">
-            <Link href="/espace" className="bouton">
-              Ouvrir mon espace
-            </Link>
-          </div>
+          <ConnexionAuto idSession={idSession as string} />
         </>
       ) : (
         <>
