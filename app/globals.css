@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    background-color: #f6f3ec;
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-papier font-sans text-encre antialiased;
+  }
+  ::selection {
+    background-color: #d9480f;
+    color: #f6f3ec;
+  }
+}
+
+@layer components {
+  .bouton {
+    @apply inline-flex min-h-14 w-full items-center justify-center rounded-md bg-braise px-6 text-lg font-semibold text-papier transition-colors hover:bg-[#b83a0a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-encre;
+  }
+  .chiffre {
+    @apply font-mono font-semibold tracking-tight text-braise;
+  }
+}
