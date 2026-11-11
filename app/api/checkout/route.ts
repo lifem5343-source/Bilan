@@ -1,21 +1,15 @@
 import type Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
+import { obtenirIdPrix } from "@/lib/prix";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Crée une session de paiement intégrée. Le prix vient du serveur, jamais du navigateur.
 export async function POST(request: Request) {
-  const prix = process.env.STRIPE_PRICE_ID;
-  if (!prix) {
-    return NextResponse.json(
-      { erreur: "Le paiement n'est pas encore disponible." },
-      { status: 503 },
-    );
-  }
-
   try {
+    const prix = await obtenirIdPrix();
     const origine = new URL(request.url).origin;
 
     const params = {
