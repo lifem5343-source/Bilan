@@ -72,6 +72,25 @@ export default function Espace() {
     }
   }
 
+  const [portail, setPortail] = useState<"repos" | "en-cours" | "erreur">("repos");
+
+  async function ouvrirPortail() {
+    setPortail("en-cours");
+    try {
+      const { data } = await clientNavigateur().auth.getSession();
+      const reponse = await fetch("/api/portail", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}` },
+      });
+      if (!reponse.ok) throw new Error("Portail indisponible");
+      const { url } = (await reponse.json()) as { url: string };
+      window.location.assign(url);
+    } catch (erreur) {
+      console.error(erreur);
+      setPortail("erreur");
+    }
+  }
+
   async function seDeconnecter() {
     await clientNavigateur().auth.signOut();
     setPhase("connexion");
@@ -106,13 +125,28 @@ export default function Espace() {
         </p>
         <Marque userId={userId} />
         <Clients userId={userId} />
-        <button
-          type="button"
-          onClick={seDeconnecter}
-          className="mt-8 text-base font-semibold underline underline-offset-4"
-        >
-          Se déconnecter
-        </button>
+        <div className="mt-8 flex flex-col items-start gap-3">
+          <button
+            type="button"
+            onClick={ouvrirPortail}
+            disabled={portail === "en-cours"}
+            className="text-base font-semibold underline underline-offset-4 disabled:opacity-60"
+          >
+            {portail === "en-cours" ? "Ouverture…" : "Gérer ou résilier mon abonnement"}
+          </button>
+          {portail === "erreur" && (
+            <p role="alert" className="text-base text-braise">
+              Le portail ne s&apos;est pas ouvert. Réessaie dans un instant.
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={seDeconnecter}
+            className="text-base font-semibold underline underline-offset-4"
+          >
+            Se déconnecter
+          </button>
+        </div>
       </div>
     );
   }
