@@ -23,6 +23,10 @@ function autorise(request: Request): boolean {
 // pas encore partis : le 1er du mois pour ceux saisis à l'avance, le lendemain pour les autres.
 export async function GET(request: Request) {
   if (!autorise(request)) {
+    console.warn(
+      "cron envoi : refusé",
+      process.env.CRON_SECRET ? "(secret reçu incorrect ou absent)" : "(CRON_SECRET non défini sur le serveur)",
+    );
     return NextResponse.json({ erreur: "Non autorisé" }, { status: 401 });
   }
 
@@ -45,6 +49,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ erreur: "Lecture impossible" }, { status: 500 });
   }
 
+  console.log(`cron envoi : ${bilans?.length ?? 0} bilan(s) à traiter`);
+
   let envoyes = 0;
   let ignores = 0;
   let echecs = 0;
@@ -52,6 +58,7 @@ export async function GET(request: Request) {
   for (const bilan of bilans ?? []) {
     const client = bilan.clients as unknown as { nom: string; email: string } | null;
     if (!client) {
+      console.warn("cron envoi : ignoré, client introuvable", bilan.id);
       ignores++;
       continue;
     }
@@ -69,6 +76,12 @@ export async function GET(request: Request) {
       .eq("user_id", bilan.user_id)
       .maybeSingle();
     if (!abo?.length || !profil) {
+      console.warn(
+        "cron envoi : ignoré",
+        bilan.id,
+        abo?.length ? "" : "(pas d'abonnement actif)",
+        profil ? "" : "(nom et couleur non renseignés)",
+      );
       ignores++;
       continue;
     }
@@ -103,5 +116,6 @@ export async function GET(request: Request) {
     await new Promise((r) => setTimeout(r, PAUSE_MS));
   }
 
+  console.log(`cron envoi : ${envoyes} envoyé(s), ${ignores} ignoré(s), ${echecs} échec(s)`);
   return NextResponse.json({ envoyes, ignores, echecs });
 }
