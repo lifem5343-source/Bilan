@@ -5,6 +5,7 @@ import { clientNavigateur } from "@/lib/supabase-navigateur";
 
 type Client = { id: string; nom: string; email: string };
 type Bilan = {
+  id: string;
   token: string;
   lu_at: string | null;
   client_id: string;
@@ -20,13 +21,15 @@ const MAX_CLIENTS = 10;
 const champ =
   "min-h-14 w-full rounded-md border border-encre/30 bg-white px-4 text-lg";
 
-// Les trois derniers mois, du plus récent (le mois qui vient de finir) au plus ancien.
+// Le mois en cours (pour saisir à l'avance) et les trois précédents.
 function moisProposes(): { valeur: string; libelle: string }[] {
   const maintenant = new Date();
-  return [1, 2, 3].map((recul) => {
+  return [0, 1, 2, 3].map((recul) => {
     const d = new Date(maintenant.getFullYear(), maintenant.getMonth() - recul, 1);
     const valeur = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
-    const libelle = d.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+    const libelle =
+      d.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }) +
+      (recul === 0 ? " (en cours)" : "");
     return { valeur, libelle };
   });
 }
@@ -55,7 +58,7 @@ export default function Clients({ userId }: { userId: string }) {
       supabase.from("clients").select("id, nom, email").order("created_at"),
       supabase
         .from("bilans")
-        .select("token, lu_at, client_id, mois, publications, vues, abonnes_gagnes, engagement, commentaire")
+        .select("id, token, lu_at, client_id, mois, publications, vues, abonnes_gagnes, engagement, commentaire")
         .order("mois", { ascending: false }),
     ]);
     if (c.error || b.error) throw c.error ?? b.error;
@@ -232,7 +235,7 @@ function SaisieMois({
   onSupprimer: () => void;
 }) {
   const mois = moisProposes();
-  const [moisChoisi, setMoisChoisi] = useState(mois[0].valeur);
+  const [moisChoisi, setMoisChoisi] = useState(mois[1].valeur);
   const existant = bilans.find((b) => b.mois === moisChoisi);
 
   const [publications, setPublications] = useState("");
@@ -251,6 +254,33 @@ function SaisieMois({
     setEngagement(existant ? String(existant.engagement) : "");
     setCommentaire(existant?.commentaire ?? "");
   }, [existant]);
+
+  const [exemple, setExemple] = useState<"repos" | "en-cours" | "ok" | "erreur">("repos");
+  const [messageExemple, setMessageExemple] = useState("");
+
+  async function envoyerExemple() {
+    if (!existant) return;
+    setExemple("en-cours");
+    try {
+      const { data } = await clientNavigateur().auth.getSession();
+      const reponse = await fetch("/api/envoyer-exemple", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ bilan_id: existant.id }),
+      });
+      if (!reponse.ok) {
+        const { erreur: texte } = (await reponse.json().catch(() => ({}))) as { erreur?: string };
+        throw new Error(texte ?? "Envoi impossible");
+      }
+      setExemple("ok");
+    } catch (e) {
+      setMessageExemple(e instanceof Error ? e.message : "Envoi impossible");
+      setExemple("erreur");
+    }
+  }
 
   async function enregistrer(e: React.FormEvent) {
     e.preventDefault();
@@ -351,6 +381,28 @@ function SaisieMois({
       <button type="submit" disabled={envoi} className="bouton disabled:opacity-60">
         {envoi ? "Enregistrement…" : "Enregistrer les chiffres"}
       </button>
+      {existant && (
+        <div>
+          <button
+            type="button"
+            onClick={envoyerExemple}
+            disabled={exemple === "en-cours"}
+            className="text-base font-semibold underline underline-offset-4 disabled:opacity-60"
+          >
+            {exemple === "en-cours" ? "Envoi…" : "M'envoyer un exemple par e-mail"}
+          </button>
+          {exemple === "ok" && (
+            <p role="status" className="mt-2 text-sm text-sourdine">
+              Envoyé à ton adresse. Pense à regarder tes courriers indésirables.
+            </p>
+          )}
+          {exemple === "erreur" && (
+            <p role="alert" className="mt-2 text-sm text-braise">
+              {messageExemple}
+            </p>
+          )}
+        </div>
+      )}
       <button
         type="button"
         onClick={onSupprimer}
