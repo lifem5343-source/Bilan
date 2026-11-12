@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { envoyerBilan, libelleDuMois } from "@/lib/courriel";
+import { adresseSite } from "@/lib/site";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
   }
 
   const supabase = getSupabaseAdmin();
-  const origine = new URL(request.url).origin;
+  const origine = adresseSite(new URL(request.url).origin);
   const maintenant = new Date();
   const debutMoisCourant = `${maintenant.getUTCFullYear()}-${String(
     maintenant.getUTCMonth() + 1,

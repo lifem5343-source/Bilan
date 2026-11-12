@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { envoyerBilan, libelleDuMois } from "@/lib/courriel";
+import { adresseSite } from "@/lib/site";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
       couleur: profil.couleur,
       client: client?.nom ?? "",
       libelleMois: libelleDuMois(String(bilan.mois)),
-      lien: `${new URL(request.url).origin}/bilan/${bilan.token}?apercu=1`,
+      lien: `${adresseSite(new URL(request.url).origin)}/bilan/${bilan.token}?apercu=1`,
     });
     return NextResponse.json({ ok: true });
   } catch (erreur) {
