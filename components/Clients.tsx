@@ -5,6 +5,8 @@ import { clientNavigateur } from "@/lib/supabase-navigateur";
 
 type Client = { id: string; nom: string; email: string };
 type Bilan = {
+  token: string;
+  lu_at: string | null;
   client_id: string;
   mois: string;
   publications: number;
@@ -53,7 +55,7 @@ export default function Clients({ userId }: { userId: string }) {
       supabase.from("clients").select("id, nom, email").order("created_at"),
       supabase
         .from("bilans")
-        .select("client_id, mois, publications, vues, abonnes_gagnes, engagement, commentaire")
+        .select("token, lu_at, client_id, mois, publications, vues, abonnes_gagnes, engagement, commentaire")
         .order("mois", { ascending: false }),
     ]);
     if (c.error || b.error) throw c.error ?? b.error;
@@ -133,6 +135,23 @@ export default function Clients({ userId }: { userId: string }) {
                       ? `Dernier bilan : ${libelleMois(dernier.mois)}`
                       : "Aucun bilan saisi"}
                   </p>
+                  {dernier && (
+                    <p className="mt-1 text-base">
+                      <a
+                        href={`/bilan/${dernier.token}?apercu=1`}
+                        target="_blank"
+                        rel="noopener"
+                        className="font-semibold underline underline-offset-4"
+                      >
+                        Voir le rapport
+                      </a>
+                      <span className="text-sourdine">
+                        {dernier.lu_at
+                          ? ` · Lu le ${new Date(dernier.lu_at).toLocaleDateString("fr-FR")}`
+                          : " · Pas encore lu"}
+                      </span>
+                    </p>
+                  )}
                 </div>
                 <button
                   type="button"

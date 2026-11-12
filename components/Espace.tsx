@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { clientNavigateur } from "@/lib/supabase-navigateur";
 import Clients from "@/components/Clients";
+import Marque from "@/components/Marque";
 
 type Phase = "chargement" | "connexion" | "abonne" | "sans-abonnement" | "erreur";
 
@@ -103,6 +104,7 @@ export default function Espace() {
         <p className="mt-4 text-lg text-sourdine">
           Ajoute tes clients, puis saisis leurs chiffres du mois en une minute.
         </p>
+        <Marque userId={userId} />
         <Clients userId={userId} />
         <button
           type="button"
