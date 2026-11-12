@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { clientNavigateur } from "@/lib/supabase-navigateur";
+import Clients from "@/components/Clients";
 
 type Phase = "chargement" | "connexion" | "abonne" | "sans-abonnement" | "erreur";
 
 export default function Espace() {
   const [phase, setPhase] = useState<Phase>("chargement");
+  const [userId, setUserId] = useState("");
   const [email, setEmail] = useState("");
   const [envoi, setEnvoi] = useState<"repos" | "en-cours" | "envoye" | "trop-de-demandes">("repos");
 
@@ -21,6 +23,7 @@ export default function Espace() {
           setPhase("connexion");
           return;
         }
+        setUserId(data.session.user.id);
         // Juste après un paiement, le webhook peut avoir quelques secondes de retard :
         // on réessaie un peu avant de conclure qu'il n'y a pas d'abonnement.
         let abonne = false;
@@ -98,9 +101,9 @@ export default function Espace() {
           Bienvenue dans Bilan.
         </h1>
         <p className="mt-4 text-lg text-sourdine">
-          Ton accès est ouvert. La saisie des chiffres du mois arrive très
-          bientôt, tu seras prévenu par e-mail.
+          Ajoute tes clients, puis saisis leurs chiffres du mois en une minute.
         </p>
+        <Clients userId={userId} />
         <button
           type="button"
           onClick={seDeconnecter}
