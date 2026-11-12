@@ -30,7 +30,7 @@ const benefices = [
   {
     titre: "Un rapport à tes couleurs",
     texte:
-      "Ton logo, ta couleur, ton nom. Ton client reçoit un document propre, qui a l'air de venir de toi.",
+      "Ta couleur, ton nom. Ton client reçoit un document propre, qui a l'air de venir de toi.",
   },
   {
     titre: "Envoyé le 1er, lu confirmé",
