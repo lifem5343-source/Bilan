@@ -154,7 +154,21 @@ export default function Accueil() {
       </section>
 
       <footer className="mx-auto max-w-3xl px-5 py-8 text-sm text-sourdine">
-        © {new Date().getFullYear()} Bilan
+        <p>© {new Date().getFullYear()} Bilan</p>
+        <nav aria-label="Informations légales" className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+          <a href="/mentions-legales" className="underline underline-offset-4">
+            Mentions légales
+          </a>
+          <a href="/cgv" className="underline underline-offset-4">
+            CGV
+          </a>
+          <a href="/confidentialite" className="underline underline-offset-4">
+            Confidentialité
+          </a>
+          <a href="/espace" className="underline underline-offset-4">
+            Mon espace
+          </a>
+        </nav>
       </footer>
 
       <div className="fixed inset-x-0 bottom-0 border-t border-filet bg-papier/95 p-3 backdrop-blur-sm md:hidden">
